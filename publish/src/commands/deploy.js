@@ -9,8 +9,6 @@ const { loadCompiledFiles, getLatestSolTimestamp } = require('../solidity');
 const checkAggregatorPrices = require('../check-aggregator-prices');
 const pLimit = require('p-limit');
 
-const limitPromise = pLimit(1);
-
 const {
 	ensureNetwork,
 	ensureDeploymentPath,
@@ -69,10 +67,13 @@ const deploy = async ({
 	manageNonces,
 	ignoreSafetyChecks,
 	ignoreCustomParameters,
+	concurrency,
 } = {}) => {
 	ensureNetwork(network);
 	deploymentPath = deploymentPath || getDeploymentPathForNetwork({ network, useOvm });
 	ensureDeploymentPath(deploymentPath);
+
+	const limitPromise = pLimit(concurrency);
 
 	// OVM uses a gas price of 0 (unless --gas explicitely defined).
 	if (useOvm && gasPrice === DEFAULTS.gasPrice) {
@@ -421,6 +422,7 @@ const deploy = async ({
 				: green('true')
 			: 'false',
 		'Gas price to use': `${gasPrice} GWEI`,
+		Concurrency: `${concurrency} parallel calls`,
 		'Method call gas limit': `${methodCallGasLimit} gas`,
 		'Contract deployment gas limit': `${contractDeploymentGasLimit} gas`,
 		'Deployment Path': new RegExp(network, 'gi').test(deploymentPath)
@@ -2323,6 +2325,11 @@ module.exports = {
 			.option(
 				'-d, --deployment-path <value>',
 				`Path to a folder that has your input configuration file ${CONFIG_FILENAME}, the synth list ${SYNTHS_FILENAME} and where your ${DEPLOYMENT_FILENAME} files will go`
+			)
+			.option(
+				'-e, --concurrency <value>',
+				'Max number of simultaneous txs/calls that can be made to a provider',
+				10
 			)
 			.option(
 				'-f, --fee-auth <value>',

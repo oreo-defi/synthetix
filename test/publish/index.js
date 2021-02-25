@@ -53,7 +53,8 @@ const {
 	wrap,
 } = snx;
 
-const limitPromise = pLimit(1);
+let concurrency;
+let limitPromise;
 
 describe('publish scripts', () => {
 	const network = 'local';
@@ -122,6 +123,11 @@ describe('publish scripts', () => {
 	before(() => {
 		fs.writeFileSync(logfilePath, ''); // reset log file
 		fs.writeFileSync(deploymentJSONPath, JSON.stringify({ targets: {}, sources: {} }));
+
+		concurrency = require('is-ci') ? 1 : 10;
+		console.log(`> Concurrency: ${concurrency}`);
+
+		limitPromise = pLimit(concurrency);
 	});
 
 	beforeEach(async () => {
@@ -240,6 +246,7 @@ describe('publish scripts', () => {
 				fs.writeFileSync(feedsJSONPath, JSON.stringify(feeds));
 
 				await commands.deploy({
+					concurrency,
 					network,
 					freshDeploy: true,
 					yes: true,
@@ -431,6 +438,7 @@ describe('publish scripts', () => {
 							fs.writeFileSync(configJSONPath, JSON.stringify(configForExrates));
 
 							await commands.deploy({
+								concurrency,
 								network,
 								yes: true,
 								privateKey: accounts.deployer.private,
@@ -514,6 +522,7 @@ describe('publish scripts', () => {
 							fs.writeFileSync(configJSONPath, JSON.stringify(configForExrates));
 
 							await commands.deploy({
+								concurrency,
 								addNewSynths: true,
 								network,
 								yes: true,
@@ -658,6 +667,7 @@ describe('publish scripts', () => {
 					fs.writeFileSync(configJSONPath, JSON.stringify(configForExrates));
 
 					await commands.deploy({
+						concurrency,
 						network,
 						yes: true,
 						privateKey: accounts.deployer.private,
@@ -1146,6 +1156,7 @@ describe('publish scripts', () => {
 												fs.writeFileSync(configJSONPath, JSON.stringify(configForExrates));
 
 												await commands.deploy({
+													concurrency,
 													addNewSynths: true,
 													network,
 													yes: true,
@@ -1389,6 +1400,7 @@ describe('publish scripts', () => {
 							fs.writeFileSync(configJSONPath, JSON.stringify(configForExrates));
 
 							await commands.deploy({
+								concurrency,
 								network,
 								yes: true,
 								privateKey: accounts.deployer.private,
@@ -1475,6 +1487,7 @@ describe('publish scripts', () => {
 						let AddressResolver;
 						beforeEach(async () => {
 							await commands.deploy({
+								concurrency,
 								network,
 								yes: true,
 								privateKey: accounts.deployer.private,
@@ -1550,6 +1563,7 @@ describe('publish scripts', () => {
 							assert.strictEqual(existingExchanger, targets['Exchanger'].address);
 
 							await commands.deploy({
+								concurrency,
 								network,
 								yes: true,
 								privateKey: accounts.deployer.private,
